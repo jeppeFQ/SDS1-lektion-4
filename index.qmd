@@ -1,0 +1,1172 @@
+---
+title: "Lektion 4"
+subtitle: "Datavisualisering"
+author: "Jeppe Fjeldgaard Qvist"
+date: today
+engine: knitr
+format: 
+  live-revealjs:
+    css: resources/kode-layout.css
+    include-after-body: "resources/timer.html"
+    slide-number: c
+    show-slide-number: print
+    smaller: true
+    scrollable: true
+    theme: default
+pyodide:
+  packages:
+    - pandas
+    - matplotlib
+    - plotnine
+webr:
+  packages:
+    - dplyr
+    - ggplot2
+    - tidyr
+---
+
+<!--- quarto add r-wasm/quarto-live ----->
+<!--- <span class="timer" data-time="180"></span> ---->
+
+{{< include ./_extensions/r-wasm/live/_knitr.qmd >}}
+
+## Dagens program 
+
+::: {.incremental}
+
+1. **Hvorfor visualisere?** — og hvorfor en figur aldrig er et neutralt vindue
+
+2. **Formålet** — hvad vil vi have modtageren til at forstå?
+
+3. **At synliggøre kompleksitet** — uden at komplicere
+
+4. **Plotnine** — grammatikken bag figuren
+
+5. **Øvelser** — I bygger selv
+
+:::
+
+<br>
+
+Litteratur: Kirk (2019), Church (2019), Rettberg (2020), Zalc & Lemercier (2019).
+
+::: {.aside}
+Alle eksempler i dag bygger på tweet-datasættet fra lektion 3. Vi laver ingen nye data — vi ser på de samme tal med andre øjne.
+:::
+
+## Vores data
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: true
+import pandas as pd
+from plotnine import *
+
+url = "https://raw.githubusercontent.com/jeppeFQ/sds1-lektion-1/refs/heads/master/resources/tweets_2016_kilde_a.csv"
+tweets = pd.read_csv(url)
+
+# Det I lærte i lektion 3: gør datoen til en dato, og træk måneden ud
+tweets["dato"] = pd.to_datetime(tweets["date"])
+tweets["maaned"] = tweets["dato"].dt.month
+tweets["har_hashtag"] = tweets["hashtags"].notna()
+tweets["antal_ord"] = tweets["content"].str.split().str.len()
+
+print(tweets.shape)
+print(tweets[["maaned", "retweets", "favorites", "har_hashtag", "antal_ord"]].head())
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: true
+library(dplyr); library(ggplot2)
+
+url <- "https://raw.githubusercontent.com/jeppeFQ/sds1-lektion-1/refs/heads/master/resources/tweets_2016_kilde_a.csv"
+tweets <- read.csv(url, na.strings = c("", "NA"))
+
+tweets$dato        <- as.POSIXct(tweets$date, tz = "UTC")
+tweets$maaned      <- as.integer(format(tweets$dato, "%m"))
+tweets$har_hashtag <- !is.na(tweets$hashtags)
+tweets$antal_ord   <- lengths(strsplit(tweets$content, " "))
+
+print(dim(tweets))
+head(tweets[, c("maaned", "retweets", "favorites", "har_hashtag", "antal_ord")])
+```
+
+:::
+
+:::
+
+3.945 tweets fra 2016. Al wrangling fra sidste uge er forudsætningen for alt, hvad vi laver i dag.
+
+# Del 1: Hvorfor visualisere?
+
+## Kort diskussion 
+
+<span class="timer" data-time="180"></span>
+
+::: {.incremental}
+
+- Kom med et eksempel, hvor visualiserede data spiller en rolle i jeres hverdag.
+
+- Hvilken **type** visualisering er det?
+
+- Hvilken **forskel** gjorde det, at det blev vist frem for skrevet?
+
+:::
+
+## Visualisering er ikke et neutralt vindue
+
+En figur ser ud som om, den bare **viser** data. Det gør den ikke. Den er resultatet af en række valg — og valgene er usynlige i det færdige billede.
+
+::: {.incremental}
+
+- Visualisering producerer **analytisk distance** (Rettberg 2020). Tallene kommer til at se ud som noget, der findes uafhængigt af den, der har lavet dem.
+
+- Formen **udfører objektivitet**. Akser, gitterlinjer og en pæn skrifttype signalerer troværdighed, uanset hvad der står.
+
+- *"This sense that systematized data have authority is an important aspect of the rhetorical power of data visualizations"* (Rettberg 2020, 39).
+
+:::
+
+## Samme data, to figurer
+
+Vi ser på det gennemsnitlige antal **ord per tweet** for hver måned i 2016.
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+gns = tweets.groupby("maaned")["antal_ord"].mean().reset_index()
+
+a = (ggplot(gns, aes(x="factor(maaned)", y="antal_ord"))
+     + geom_col()
+     + labs(title="Version A", x="Måned", y="Gns. antal ord"))
+
+a.show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+gns <- tweets |>
+  group_by(maaned) |>
+  summarise(antal_ord = mean(antal_ord))
+
+ggplot(gns, aes(x = factor(maaned), y = antal_ord)) +
+  geom_col() +
+  labs(title = "Version A", x = "Måned", y = "Gns. antal ord")
+```
+
+:::
+
+:::
+
+## Samme data, to figurer
+
+Én linje er ændret.
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+b = (ggplot(gns, aes(x="factor(maaned)", y="antal_ord"))
+     + geom_col()
+     + coord_cartesian(ylim=(16, 22))          # <- den ene linje
+     + labs(title="Version B", x="Måned", y="Gns. antal ord"))
+
+b.show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(gns, aes(x = factor(maaned), y = antal_ord)) +
+  geom_col() +
+  coord_cartesian(ylim = c(16, 22)) +
+  labs(title = "Version B", x = "Måned", y = "Gns. antal ord")
+```
+
+:::
+
+:::
+
+## Hvad skete der?
+
+::: {.incremental}
+
+- Tallene går fra **16,6** til **21,3** ord. Ingen data er ændret, fjernet eller manipuleret.
+
+- Version A siger: *tweetlængden er nogenlunde konstant hele året.*
+
+- Version B siger: *april var et markant dyk, og november–december var en eksplosion.*
+
+- Begge figurer er sande. Kun den ene er ærlig.
+
+:::
+
+<br>
+
+::: {.incremental}
+
+> Hvornår **er** det legitimt at skære y-aksen? Findes der data, hvor det at starte ved nul er det misvisende valg?
+
+:::
+
+## Absolutte og relative tal
+
+Endnu et sted, hvor samme data giver to historier. Hvor mange af månedens tweets indeholder et hashtag?
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+h = (tweets.groupby("maaned")
+     .agg(antal_hashtag=("har_hashtag", "sum"), antal=("id", "size"))
+     .reset_index())
+h["andel"] = h["antal_hashtag"] / h["antal"]
+
+print(h)
+
+(ggplot(h, aes(x="factor(maaned)", y="antal_hashtag"))
+ + geom_col()
+ + labs(title="Absolutte tal", x="Måned", y="Antal tweets med hashtag")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+h <- tweets |>
+  group_by(maaned) |>
+  summarise(antal_hashtag = sum(har_hashtag), antal = n()) |>
+  mutate(andel = antal_hashtag / antal)
+
+print(h)
+
+ggplot(h, aes(x = factor(maaned), y = antal_hashtag)) +
+  geom_col() +
+  labs(title = "Absolutte tal", x = "Måned", y = "Antal tweets med hashtag")
+```
+
+:::
+
+:::
+
+## Absolutte og relative tal
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+(ggplot(h, aes(x="factor(maaned)", y="andel"))
+ + geom_col()
+ + labs(title="Relative tal", x="Måned", y="Andel med hashtag")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(h, aes(x = factor(maaned), y = andel)) +
+  geom_col() +
+  labs(title = "Relative tal", x = "Måned", y = "Andel med hashtag")
+```
+
+:::
+
+:::
+
+::: {.incremental}
+
+- **April** er nummer fem i absolutte tal, men nummer to i relative.
+- **Januar** er nummer tre i absolutte tal, men nummer syv i relative.
+- Nævneren er antallet af tweets den måned — og det svinger fra 131 til 477.
+
+:::
+
+> Hvilken af de to figurer ville I sætte i en artikel? Og hvad ville I skrive i figurteksten?
+
+## Illusioner
+
+::: {.incremental}
+
+- *"In fact, visualization is always abstraction. It often conveys a sense of direct access to data; yet each image is the product of choices about what not to represent"* (Zalc & Lemercier 2019, 126-127).
+
+- Det, der **ikke** er med, er lige så meget et valg som det, der er.
+
+- I vores figurer indtil nu: hvad er valgt fra? Retweets. Tidspunkt på dagen. Hvem der svarede. Alle tweets fra andre år. Alle tweets, der blev slettet, før data blev hentet.
+
+:::
+
+## Tekst eller figur?
+
+| Brug tekst | Brug en figur |
+|---|---|
+| Sammenhænge, mekanismer, fortolkning | Mønstre og relationer, der ses på et øjeblik |
+| Få tal, eller tal der skal aflæses præcist | Mange observationer, hvor mønsteret er pointen |
+| Teoretiske argumenter og afgrænsninger | Når læseren skal forstå hurtigt |
+
+<br>
+
+::: {.incremental}
+
+**Case 1:** 28,5 % af tweetsene i januar havde et hashtag, mod 48,4 % i oktober. *Tekst eller figur?*
+
+**Case 2:** Fordelingen af retweets på tværs af alle 3.945 tweets. *Tekst eller figur?*
+
+:::
+
+# Del 2: Formålet
+
+## "Origin curiosity" (Kirk 2019, 62)
+
+> *"By identifying your project's origin curiosity, it gives shape to your subsequent decisions (…). This enables you to keep checking that your choices help to contribute towards facilitating understanding about the most relevant matters."*
+
+<br>
+
+Spørgsmålet kommer **før** figuren. Ikke omvendt.
+
+::: {.incremental}
+
+- Dårlig start: "Jeg har et datasæt med tweets — hvad kan jeg plotte?"
+- Bedre start: "Ændrede opmærksomheden omkring kontoen sig hen over valgåret?"
+
+:::
+
+## Fra nysgerrighed til forståelse
+
+::: {.incremental}
+
+1. **Nysgerrighed** — formulér spørgsmålet. Hvorfor overhovedet?
+
+2. **Visualisering** — lad spørgsmålet styre valgene. Hvilken variabel på hvilken akse?
+
+3. **Forståelse** — spørg bagefter: gør figuren det vigtige tydeligere?
+
+:::
+
+<br>
+
+> Hvor kommer nysgerrigheden fra? Og hvor specifik skal den være, før den kan styre et valg af figur?
+
+## Publikum
+
+::: {.incremental}
+
+- **Hvem** er modtagerne?
+- Hvilken **viden** har de i forvejen?
+- Hvad er deres **motivation** for at forstå det her?
+- Hvordan er deres **visualiseringslitteracitet**?
+
+:::
+
+<br>
+
+::: {.incremental}
+
+Et groft udgangspunkt:
+
+- **Lav** → simple linjer og søjler
+- **Mellem** → linjer, stablede søjler (højst 3 dele), heatmaps
+- **Høj** → modeltabeller, konfidensintervaller, fordelinger
+
+:::
+
+## For os selv eller for andre?
+
+::: {.incremental}
+
+- Vi visualiserer hele tiden **til os selv**, mens vi udforsker data. Det er en del af eksplorativ dataanalyse.
+
+- Den slags figurer må gerne være **hurtige og grimme**. Modtageren — os selv — har uendelig tålmodighed og kender data.
+
+- Kirk (2019, 196): de figurer, der afslørede noget for jer selv, er ofte **prototyper** på det, I skal vise andre.
+
+- Men ikke altid.
+
+:::
+
+## Når EDA-figuren ikke kan bruges
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+(ggplot(tweets, aes(x="retweets", y="favorites"))
+ + geom_point()
+ + labs(title="Retweets og favoritter", x="Retweets", y="Favoritter")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(tweets, aes(x = retweets, y = favorites)) +
+  geom_point() +
+  labs(title = "Retweets og favoritter", x = "Retweets", y = "Favoritter")
+```
+
+:::
+
+:::
+
+3.945 punkter oven i hinanden, klemt sammen i nederste venstre hjørne af nogle få ekstreme værdier.
+
+Til jer selv er figuren fin — I ved, hvad I kigger på. Til andre siger den ingenting.
+
+## Samme data, brugbar figur
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+(ggplot(tweets, aes(x="retweets", y="favorites"))
+ + geom_point(alpha=0.15, size=1)
+ + scale_x_log10()
+ + scale_y_log10()
+ + labs(title="Retweets og favoritter (log-skala)",
+        x="Retweets", y="Favoritter")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(tweets, aes(x = retweets, y = favorites)) +
+  geom_point(alpha = 0.15, size = 1) +
+  scale_x_log10() +
+  scale_y_log10() +
+  labs(title = "Retweets og favoritter (log-skala)",
+       x = "Retweets", y = "Favoritter")
+```
+
+:::
+
+:::
+
+To ændringer: **gennemsigtighed** gør tætheden synlig, og **log-skala** giver plads til de ekstreme værdier uden at klemme resten sammen.
+
+::: {.aside}
+Log-skalaen er ikke pynt. Den afspejler, at data faktisk er fordelt sådan. Det er forskellen på at synliggøre kompleksitet og at komplicere.
+:::
+
+## "Reading tone" og "feeling tone"
+
+::: {.incremental}
+
+- **Reading tone** (Kirk 2019, 75): præcision og effektivitet. Pragmatisk, analytisk, konservativ og *nødvendigvis kedelig*. Søjlediagrammet er urtypen.
+
+- **Feeling tone** (ibid., 76): et bredt indtryk af strukturen, ikke præcis aflæsning. Emotiv, figurativ, dramatisk.
+
+- Begrænsningen ved feeling tone: nogle gange visualiserer den **det åbenlyse** — eller noget, der kunne have stået i én sætning.
+
+- I mange sammenhænge vil man have begge: først indtrykket, så detaljen.
+
+:::
+
+## Explanatory og exploratory
+
+::: {.incremental}
+
+**Explanatory** (Kirk 2019, 82): den, der laver figuren, tager ansvar for at **fremhæve observationerne**. Annotationer peger på det vigtige. Figuren skal kunne stå alene.
+
+**Exploratory** (ibid., 84): modtageren skal selv **danne fortolkningen**. Næsten altid digitalt og interaktivt. *"The responsibility for then translating 'what it means' (…) is passed on to them."*
+
+:::
+
+<br>
+
+::: {.aside}
+"Exploratory" her har intet med eksplorativ dataanalyse at gøre. Det er to forskellige begreber med samme navn.
+:::
+
+## Fra rå figur til explanatory figur
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+uge = tweets.set_index("dato").resample("W").size().reset_index(name="antal")
+
+(ggplot(uge, aes(x="dato", y="antal"))
+ + geom_line()
+ + annotate("text", x=pd.Timestamp("2016-08-15"), y=160,
+            label="Flest tweets i ugen op til valget")
+ + labs(title="Antal tweets per uge, 2016",
+        x=None, y="Tweets per uge")
+ + theme_minimal()).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+uge <- tweets |>
+  mutate(uge = as.Date(cut(dato, "week"))) |>
+  count(uge, name = "antal")
+
+ggplot(uge, aes(x = uge, y = antal)) +
+  geom_line() +
+  annotate("text", x = as.Date("2016-08-15"), y = 160,
+           label = "Flest tweets i ugen op til valget") +
+  labs(title = "Antal tweets per uge, 2016", x = NULL, y = "Tweets per uge") +
+  theme_minimal()
+```
+
+:::
+
+:::
+
+Titlen siger, hvad man ser. Annotationen siger, hvad man skal lægge mærke til. Det er hele forskellen på en figur, der skal forklares, og en der forklarer.
+
+## Idealer for en god figur (Kirk 2019, 38)
+
+::: {.incremental}
+
+- **Troværdig** — er håndteringen af data rimelig og tro mod emnet? Har fremstillingen integritet?
+
+- **Tilgængelig** — er den brugbar? Er fremstillingen forståelig for dem, der skal læse den?
+
+- **Elegant** — er den æstetisk? Er den tiltalende at se på?
+
+:::
+
+<br>
+
+::: {.incremental}
+
+Rækkefølgen er ikke tilfældig. En elegant figur, der ikke er troværdig, er værre end ingen figur.
+
+:::
+
+## Kompleksitet er ikke komplikation
+
+> *"Any complexity in the figure should reflect complexity in the data rather than unnecessary complications in representation"* (Zalc & Lemercier 2019, 127).
+
+<br>
+
+::: {.incremental}
+
+- **Kompleksitet i data**: retweet-fordelingen er skæv. Det *skal* figuren vise.
+- **Komplikation i fremstillingen**: 3D-effekter, tolv farver, dobbelte y-akser, mønstre i baggrunden.
+
+:::
+
+## At synliggøre kompleksitet
+
+Gennemsnittet for retweets i 2016 er **6.502**. Medianen er **4.593**. Hvad fortæller ét tal os?
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+print(tweets["retweets"].describe().round(0))
+
+(ggplot(tweets, aes(x="retweets"))
+ + geom_histogram(bins=50)
+ + labs(title="Fordelingen af retweets", x="Retweets", y="Antal tweets")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+print(summary(tweets$retweets))
+
+ggplot(tweets, aes(x = retweets)) +
+  geom_histogram(bins = 50) +
+  labs(title = "Fordelingen af retweets", x = "Retweets", y = "Antal tweets")
+```
+
+:::
+
+:::
+
+::: {.incremental}
+
+- Kun **34 %** af alle tweets ligger over gennemsnittet.
+- Det mest delte tweet står alene for **1,1 %** af alle retweets i hele året.
+- De øverste 1 % står for knap **9 %**.
+
+:::
+
+## Samme data, log-skala
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+(ggplot(tweets, aes(x="retweets"))
+ + geom_histogram(bins=50)
+ + scale_x_log10()
+ + labs(title="Fordelingen af retweets (log-skala)",
+        x="Retweets (log)", y="Antal tweets")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(tweets, aes(x = retweets)) +
+  geom_histogram(bins = 50) +
+  scale_x_log10() +
+  labs(title = "Fordelingen af retweets (log-skala)",
+       x = "Retweets (log)", y = "Antal tweets")
+```
+
+:::
+
+:::
+
+> *"The greatest value of a picture is when it forces us to notice what we never expected to see"* (Tukey 1977, forord).
+
+Er den her figur mere eller mindre ærlig end den forrige? Hvad kræver den af modtageren?
+
+## Modtagerens afkodning (Kirk 2019, 20)
+
+::: {.incremental}
+
+1. **At se** — kan jeg overhovedet aflæse den? Afhænger af læsbarhed og rent design.
+
+2. **At fortolke** — hvad betyder det? Er det meget eller lidt, forventet eller overraskende?
+
+3. **At forstå** — hvad betyder det **for mig**? Hvad har jeg lært, og skal jeg gøre noget?
+
+:::
+
+<br>
+
+::: {.incremental}
+
+> *"From your perspective as the visualiser, this final phase of understanding is something you will have limited control over"* (Church 2019, 26).
+
+Visualisering **letter** forståelsen. Den garanterer den ikke.
+
+:::
+
+# Del 3: Plotnine
+
+## Hvorfor plotnine?
+
+::: {.incremental}
+
+- Plotnine er en oversættelse af R-pakken **ggplot2** til Python.
+
+- `gg` står for **grammar of graphics**: alle figurer bygges af de samme byggeklodser, uanset type.
+
+- I kommer fra R. Det I kan i ggplot2, kan I stort set i plotnine — og omvendt.
+
+:::
+
+<br>
+
+::: {.incremental}
+
+**Fordele:** alle plottyper har samme struktur, og elementerne kan kombineres frit.
+
+**Ulemper:** koden er ikke intuitiv i starten, og den fylder mere end en færdig funktion, der kun kan én ting.
+
+:::
+
+## Forskellen på R og Python
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# Kolonnenavne står i anførselstegn, og hele udtrykket i parenteser
+(ggplot(tweets, aes(x="retweets"))
+ + geom_histogram(bins=30)).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+# Kolonnenavne uden anførselstegn, ingen ydre parenteser
+ggplot(tweets, aes(x = retweets)) +
+  geom_histogram(bins = 30)
+```
+
+:::
+
+:::
+
+To forskelle, og kun to:
+
+1. Kolonnenavne skal i **anførselstegn** i plotnine.
+2. Hele udtrykket skal i **ydre parenteser**, så `+` kan fortsætte på næste linje.
+
+## Tre nødvendige komponenter
+
+```
+(ggplot(tweets, aes(x="retweets")) + geom_histogram())
+     ^        ^          ^                ^
+     |        |          |                |
+  funktion   DATA    MAPPING            GEOM
+```
+
+::: {.incremental}
+
+1. **Data** — en DataFrame. Én række per observation.
+2. **Mapping** — hvilke kolonner hører til hvilke visuelle egenskaber. Det er `aes()`.
+3. **Geom** — hvilken geometrisk form skal tegnes. Punkter, søjler, linjer.
+
+:::
+
+Alt andet — skalaer, facetter, temaer, titler — er **valgfrit**.
+
+## `aes()`: at koble variable til visuelle egenskaber
+
+::: {.incremental}
+
+- `x`, `y` → placering
+- `color` / `fill` → farve efter en variabels værdier
+- `size`, `shape`, `alpha` → størrelse, form, gennemsigtighed
+
+:::
+
+<br>
+
+::: {.incremental}
+
+**Tommelfingerregel:** handler det om en **variabel**, skal det ind i `aes()`. Er det en fast værdi, skal det udenfor.
+
+:::
+
+## Inde i eller uden for `aes()`
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# UDEN FOR aes(): alle punkter får samme farve
+(ggplot(tweets, aes(x="retweets", y="favorites"))
+ + geom_point(color="darkorange", alpha=0.2)
+ + scale_x_log10() + scale_y_log10()).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(tweets, aes(x = retweets, y = favorites)) +
+  geom_point(color = "darkorange", alpha = 0.2) +
+  scale_x_log10() + scale_y_log10()
+```
+
+:::
+
+:::
+
+## Inde i eller uden for `aes()`
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# INDE I aes(): farven bestemmes af en variabel
+(ggplot(tweets, aes(x="retweets", y="favorites", color="har_hashtag"))
+ + geom_point(alpha=0.2)
+ + scale_x_log10() + scale_y_log10()
+ + labs(color="Har hashtag")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(tweets, aes(x = retweets, y = favorites, color = har_hashtag)) +
+  geom_point(alpha = 0.2) +
+  scale_x_log10() + scale_y_log10() +
+  labs(color = "Har hashtag")
+```
+
+:::
+
+:::
+
+Bemærk, at der nu automatisk kom en **forklaringsboks**. Det er ikke noget, I bad om — det følger af, at farven er koblet til en variabel.
+
+## Plotnine forventer "tidy" data
+
+::: {.incremental}
+
+- Hver **variabel** er en kolonne.
+- Hver **observation** er en række.
+- Hver **celle** er én måling.
+
+:::
+
+<br>
+
+::: {.incremental}
+
+Det er præcis det **lange format** fra lektion 3. Derfor var `melt()` ikke en teknikalitet: plotnine kan ikke tegne bredt format.
+
+Skal I tegne tre ord over tolv måneder, skal data ligge som 36 rækker — ikke som en 3×12-tabel.
+
+:::
+
+## Ofte brugte geoms
+
+::: {.incremental}
+
+- `geom_col` og `geom_bar` — søjler
+- `geom_point` og `geom_jitter` — punkter
+- `geom_line`, `geom_step`, `geom_smooth` — linjer
+- `geom_histogram`, `geom_density`, `geom_boxplot` — fordelinger
+- `geom_tile` — heatmaps
+- `geom_text` og `geom_label` — tekst
+
+:::
+
+<br>
+
+::: {.aside}
+Nogle få geoms fra ggplot2 mangler i plotnine, og der findes en række R-pakker, der udvider ggplot2, som ikke har en modsvarighed. Grundstammen er den samme.
+:::
+
+## `geom_bar` eller `geom_col`?
+
+Den forskel forvirrer alle første gang.
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# geom_bar TÆLLER selv rækkerne
+(ggplot(tweets, aes(x="factor(maaned)"))
+ + geom_bar()
+ + labs(title="geom_bar: tæller rækker", x="Måned", y="Antal tweets")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(tweets, aes(x = factor(maaned))) +
+  geom_bar() +
+  labs(title = "geom_bar: tæller rækker", x = "Måned", y = "Antal tweets")
+```
+
+:::
+
+:::
+
+`geom_bar` tæller selv. `geom_col` bruger den y-værdi, I giver den — og kræver derfor, at I har aggregeret først. Skal I vise et **gennemsnit**, skal det altid være `geom_col`.
+
+## Facetter: små multipler
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+(ggplot(tweets, aes(x="retweets"))
+ + geom_histogram(bins=25)
+ + scale_x_log10()
+ + facet_wrap("~maaned")
+ + labs(title="Retweets per måned", x="Retweets (log)", y=None)).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(tweets, aes(x = retweets)) +
+  geom_histogram(bins = 25) +
+  scale_x_log10() +
+  facet_wrap(~maaned) +
+  labs(title = "Retweets per måned", x = "Retweets (log)", y = NULL)
+```
+
+:::
+
+:::
+
+Tolv figurer med **samme akser**. Det er dét, der gør dem sammenlignelige — og det er derfor små multipler ofte slår én figur med tolv farver.
+
+## Temaer og titler
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+(ggplot(h, aes(x="factor(maaned)", y="andel"))
+ + geom_col(fill="steelblue")
+ + labs(title="Andel af tweets med mindst ét hashtag",
+        subtitle="@realDonaldTrump, 2016",
+        x="Måned", y="Andel",
+        caption="Data: egen indsamling")
+ + theme_minimal()).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(h, aes(x = factor(maaned), y = andel)) +
+  geom_col(fill = "steelblue") +
+  labs(title = "Andel af tweets med mindst ét hashtag",
+       subtitle = "@realDonaldTrump, 2016",
+       x = "Måned", y = "Andel",
+       caption = "Data: egen indsamling") +
+  theme_minimal()
+```
+
+:::
+
+:::
+
+`theme_minimal()`, `theme_bw()`, `theme_classic()`, `theme_void()` — prøv dem. Standardtemaet med grå baggrund er en smagssag, ikke en regel.
+
+## Sortér, når kategorierne ikke har en rækkefølge
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+antal = {}
+for x in tweets["hashtags"].dropna():
+    for tag in str(x).split(","):
+        antal[tag] = antal.get(tag, 0) + 1
+
+top = (pd.DataFrame(antal.items(), columns=["hashtag", "antal"])
+       .sort_values("antal", ascending=False).head(10))
+top["hashtag"] = pd.Categorical(top["hashtag"],
+                                categories=top.sort_values("antal")["hashtag"])
+
+(ggplot(top, aes(x="hashtag", y="antal"))
+ + geom_col()
+ + coord_flip()
+ + labs(title="De ti hyppigste hashtags", x=None, y="Antal")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+top <- tweets |>
+  filter(!is.na(hashtags)) |>
+  tidyr::separate_rows(hashtags, sep = ",") |>
+  count(hashtags, sort = TRUE) |>
+  head(10)
+
+ggplot(top, aes(x = reorder(hashtags, n), y = n)) +
+  geom_col() +
+  coord_flip() +
+  labs(title = "De ti hyppigste hashtags", x = NULL, y = "Antal")
+```
+
+:::
+
+:::
+
+Måneder har en naturlig rækkefølge. Hashtags har ikke — så sortér efter værdien, og vend figuren, så etiketterne kan læses.
+
+# Del 4: Øvelser
+
+## Øvelser
+
+<span class="timer" data-time="1200"></span>
+
+::: {.incremental}
+
+1. **Byg den simpleste figur.** Antal tweets per måned med `geom_bar`. Tilføj derefter titel og akseetiketter.
+
+2. **Manipulér med vilje.** Lav en figur af gennemsnitligt antal retweets per måned, som får forskellen til at se så **lille** ud som muligt. Og derefter en, der får den til at se så **stor** ud som muligt. Skriv én sætning om, hvad hver figur "siger".
+
+3. **Absolut eller relativ.** Vis antallet af tweets med over 10.000 retweets per måned — først i absolutte tal, så som andel af månedens tweets. Hvilken figur ville I bruge, og hvorfor?
+
+4. **Synliggør en fordeling.** Lav et boxplot af retweets per måned med `geom_boxplot()` og log-skala. Hvad kan man se her, som en søjle med gennemsnit skjuler?
+
+5. **Gør den explanatory.** Vælg én af jeres figurer. Giv den en titel, der siger hvad man ser, og en annotation, der peger på det vigtigste. Vis den til en anden gruppe uden at forklare noget.
+
+:::
+
+---
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# Skriv din kode her
+
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+# Skriv din kode her
+
+```
+
+:::
+
+:::
+
+## Opsamling
+
+::: {.incremental}
+
+- En figur er **ikke** et neutralt vindue. Akser, nævnere og udeladelser er valg.
+
+- **Formålet kommer først.** Spørgsmålet styrer figuren, ikke omvendt.
+
+- Figuren skal afspejle **kompleksiteten i data** — ikke tilføje kompleksitet i fremstillingen.
+
+- Grammatikken er den samme hver gang: **data + mapping + geom**. Resten er finpudsning.
+
+- De figurer, I laver til jer selv, er sjældent dem, I skal vise andre.
+
+:::
+
