@@ -786,13 +786,9 @@ Bemærk, at der nu automatisk kom en **forklaringsboks**. Det er ikke noget, I b
 
 <br>
 
-::: {.incremental}
-
 Det er præcis det **lange format** fra lektion 3. Derfor er `melt()` nogle gange en nødvendighed, da plotnine ikke kan tegne/visualisere bredt format.
 
 > Skal I, fx, visualisere tre ord over tolv måneder, skal data ligge som 36 rækker og ikke som en 3×12-tabel.
-
-:::
 
 ## Ofte brugte `geom`s
 
@@ -984,32 +980,14 @@ Måneder har en naturlig rækkefølge. Hashtags har ikke, så sortér efter vær
 
 ## Opsamling
 
-::: {.incremental}
-
 - En figur er **ikke** et neutralt vindue. Akser, nævnere og udeladelser er valg.
 
 - **Formålet kommer først.** Spørgsmålet styrer figuren, ikke omvendt.
 
-- Figuren skal afspejle **kompleksiteten i data** — ikke tilføje kompleksitet i fremstillingen.
+- Figuren skal afspejle **kompleksiteten i data**, men ikke tilføje kompleksitet i fremstillingen.
 
 - Grammatikken er den samme hver gang: **data + mapping + geom**. Resten er finpudsning.
 
 - De figurer, I laver til jer selv, er sjældent dem, I skal vise andre.
 
-:::
-
 # Del 4: Øvelser
-
-## Øvelser
-
-<span class="timer" data-time="1200"></span>
-
-1. **Byg den simpleste figur.** Antal tweets per måned med `geom_bar`. Tilføj derefter titel og akseetiketter.
-
-2. **Manipulér med vilje.** Lav en figur af gennemsnitligt antal retweets per måned, som får forskellen til at se så **lille** ud som muligt. Og derefter en, der får den til at se så **stor** ud som muligt. Skriv én sætning om, hvad hver figur "siger".
-
-3. **Absolut eller relativ.** Vis antallet af tweets med over 10.000 retweets per måned — først i absolutte tal, så som andel af månedens tweets. Hvilken figur ville I bruge, og hvorfor?
-
-4. **Synliggør en fordeling.** Lav et boxplot af retweets per måned med `geom_boxplot()` og log-skala. Hvad kan man se her, som en søjle med gennemsnit skjuler?
-
-5. **Gør den explanatory.** Vælg én af jeres figurer. Giv den en titel, der siger hvad man ser, og en annotation, der peger på det vigtigste. Vis den til en anden gruppe uden at forklare noget.
