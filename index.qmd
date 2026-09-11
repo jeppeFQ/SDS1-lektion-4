@@ -25,6 +25,7 @@ webr:
     - tidyr
 ---
 
+
 <!--- quarto add r-wasm/quarto-live ----->
 <!--- <span class="timer" data-time="180"></span> ---->
 
@@ -45,7 +46,7 @@ webr:
 <br>
 
 ::: {.aside}
-Alle eksempler i dag bygger på tweet-datasættet fra lektion 3. Vi laver ingen nye data, i stedet ser vi på de samme tal med "andre øjne".
+Eksemplerne i dag bygger på tweet-datasættet fra lektion 3. Vi laver ingen nye data, i stedet ser vi på de samme tal med "andre øjne".
 :::
 
 ## Vores data
@@ -125,6 +126,20 @@ En figur ser ud som om, den bare **viser** data. Det gør den ikke. Den er resul
 - Formen **udfører objektivitet**. Akser, gitterlinjer og en pæn skrifttype signalerer troværdighed, uanset hvad der står.
 
 - *"This sense that systematized data have authority is an important aspect of the rhetorical power of data visualizations"* (Rettberg 2020, 39).
+
+## Grim, dårlig eller forkert?
+
+Wilke (2019) foreslår tre beskrivelser af visualiseringer, som peger på tre forskellige slags problemer.
+
+- **Grim**: æstetiske problemer, men figuren er klar og informativ. Skrigende farver, tre skrifttyper, et dominerende gitter.
+
+- **Dårlig**: problemer med **perception**. Figuren er uklar, forvirrende, overkompliceret eller vildledende.
+
+- **Forkert**: problemer med **matematikken**. Figuren er objektivt ukorrekt.
+
+<br>
+
+Grænsen mellem grim og dårlig er flydende.
 
 ## Samme data, to figurer
 
@@ -220,6 +235,64 @@ ggplot(gns, aes(x = factor(maaned), y = antal_ord)) +
 
 > Hvornår **er** det legitimt at skære y-aksen? Findes der data, hvor det at starte ved nul er det misvisende valg?
 
+## Princippet om proportionelt blæk
+
+> *"The sizes of shaded areas in a visualization need to be proportional to the data values they represent"* (Bergstrom & West 2016, citeret i Wilke 2019, kap. 17).
+
+<br>
+
+Hvorfor er en afskåret søjle **forkert** og ikke bare grim?
+
+- En søjle koder værdien **to gange**: i sin endeposition *og* i sin længde. Starter søjlen et andet sted end nul, siger de to ting noget forskelligt. Figuren er internt modstridende.
+
+- Og vores perception aflæser **længden**, ikke endepositionen.
+
+<br>
+
+> **Søjler på en lineær skala skal starte i nul.**
+
+## Så må man aldrig zoome?
+
+Jo. Man skal bare bruge en anden geometri.
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+(ggplot(gns, aes(x="factor(maaned)", y="antal_ord"))
+ + geom_point(size=4)
+ + coord_cartesian(ylim=(16, 22))
+ + labs(title="Punkter tåler et zoom", x="Måned", y="Gns. antal ord")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(gns, aes(x = factor(maaned), y = antal_ord)) +
+  geom_point(size = 4) +
+  coord_cartesian(ylim = c(16, 22)) +
+  labs(title = "Punkter tåler et zoom", x = "Måned", y = "Gns. antal ord")
+```
+
+:::
+
+:::
+
+Et **punkt** koder kun værdien ét sted: i sin placering. Der er ingen længde, der kan modsige placeringen. Derfor er et zoom legitimt her og "forbudt" i søjlefiguren.
+
+::: {.aside}
+Samme logik gælder skyggede arealer under en kurve. Skyggen tilføjer en længde, der skal starte i nul.
+:::
+
 ## Absolutte og relative tal
 
 Endnu et sted, hvor samme data giver to historier. Hvor mange af månedens tweets indeholder et hashtag?
@@ -308,7 +381,7 @@ ggplot(h, aes(x = factor(maaned), y = andel)) +
 
 ## Illusioner
 
-- *"In fact, visualization is always abstraction. It often conveys a sense of direct access to data; yet each image is the product of choices about what not to represent"* (Zalc & Lemercier 2019, 126-127).
+> *"In fact, visualization is always abstraction. It often conveys a sense of direct access to data; yet each image is the product of choices about what not to represent"* (Zalc & Lemercier 2019, 126-127).
 
 - Det, der **ikke** er med, er lige så meget et valg som det, der er.
 
@@ -341,7 +414,7 @@ ggplot(h, aes(x = factor(maaned), y = andel)) +
 Spørgsmålet kommer **før** figuren. Ikke omvendt.
 
 - Dårlig start: *"Jeg har et datasæt med tweets ... hvad kan jeg plotte?"*
-- Bedre start: *"Ændrede opmærksomheden omkring `@donaldjtrump` sig hen over valgåret?"*
+- Bedre start: *"Ændrede opmærksomheden omkring `@realDonaldTrump` sig hen over valgåret?"*
 
 ## Fra nysgerrighed til forståelse
 
@@ -644,6 +717,21 @@ Er den her figur mere eller mindre ærlig end den forrige? Hvad kræver den af m
 
 <br>
 
+## Hvad betyder "grammatik"?
+
+En sætning bygges af ord med bestemte roller. En figur bygges på samme måde af **komponenter med bestemte roller**.
+
+- **Data**: hvilken tabel?
+- **Mapping**: hvilke kolonner hører til hvilke visuelle egenskaber?
+- **Geom**: hvilken form skal tegnes?
+- **Skala**: hvordan omsættes tal til positioner og farver?
+- **Facet**: skal figuren deles op i småfigurer?
+- **Tema**: hvordan ser alt det ikke-data ud?
+
+<br>
+
+Komponenterne lægges sammen med `+`. De tre første er obligatoriske. Resten er valgfrit.
+
 ## Forskellen på R og Python
 
 ::: {.panel-tabset}
@@ -697,6 +785,65 @@ To forskelle, og kun to:
 3. **Geom**: hvilken geometrisk form skal tegnes. Punkter, søjler, linjer.
 
 Alt andet (e.g., skalaer, facetter, temaer, titler) er **valgfrit**.
+
+## Læs koden linje for linje
+
+1. `ggplot(tweets, ...)`: opret en figur, der bruger tabellen `tweets`. Der tegnes endnu ingenting.
+
+2. `aes(x="retweets")`: kolonnen `retweets` skal ligge langs x-aksen.
+
+3. `+ geom_histogram()`: tegn nu et histogram med den kobling.
+
+<br>
+
+Kører I kun de to første dele, får I et tomt koordinatsystem. Det er ikke en fejl, I har bare ikke sagt, hvad der skulle tegnes.
+
+## Aesthetics: hvad er det egentlig?
+
+> *"All data visualizations map data values into quantifiable features of the resulting graphic. We refer to these features as aesthetics"* (Wilke 2019, kap. 2).
+
+<br>
+
+En **aesthetic** er en visuel egenskab, der kan varieres: position, farve, størrelse, form, stregtykkelse, gennemsigtighed.
+
+At lave en figur er at bestemme, **hvilken variabel der skal styre hvilken egenskab**. 
+
+## Hvilke aesthetics findes der?
+
+Nogle kan bære **kontinuerlige** data:
+
+- `x`, `y` → position
+- `color`, `fill` → farve
+- `size` → størrelse
+- `alpha` → gennemsigtighed
+
+Andre kan kun bære **diskrete** data:
+
+- `shape` → punktets form
+- `linetype` → stiplet, prikket, fuldt optrukket
+
+<br>
+
+## Variabeltyper
+
+| Type | Eksempel | I vores data |
+|---|---|---|
+| Kontinuerlig | 1,3 ; 5,7 ; 83 | `retweets`, `favorites` |
+| Diskret (tal) | 1 ; 2 ; 3 | `antal_ord` |
+| Kategorisk uden orden | ja ; nej | `har_hashtag` |
+| Kategorisk med orden | lav ; middel ; høj | — |
+| Dato eller tid | 5. jan. 2016 | `dato` |
+| Tekst | fri tekst | `content` |
+
+<br>
+
+`maaned` står som tal i tabellen, men er **kategorisk med orden** i virkeligheden. Derfor skriver vi `factor(maaned)`, ellers behandler plotnine måned 6,5 som noget, der findes.
+
+## Skalaer kobler data til aesthetics
+
+- En **skala** er den konkrete oversættelse: hvilken talværdi bliver til hvilken position, og hvilken kategori bliver til hvilken farve.
+
+- Plotnine vælger en skala automatisk. `scale_x_log10()` og `scale_fill_brewer()` er jer, der bestemmer/overskriver valget.
 
 ## `aes()`: at koble variable til visuelle egenskaber
 
@@ -778,6 +925,41 @@ ggplot(tweets, aes(x = retweets, y = favorites, color = har_hashtag)) +
 
 Bemærk, at der nu automatisk kom en **forklaringsboks**. Det er ikke noget, I bad om,  men følger af, at farven er koblet til en variabel. (Den kan også fjernes igen.)
 
+## Fejlen alle laver én gang
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# Fast farve puttet ind i aes() ved en fejl
+(ggplot(tweets.head(300), aes(x="retweets", y="favorites", color="'darkorange'"))
+ + geom_point()).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(head(tweets, 300), aes(x = retweets, y = favorites, color = "darkorange")) +
+  geom_point()
+```
+
+:::
+
+:::
+
+Punkterne bliver **røde**, og der kommer en forklaringsboks, hvor der står "darkorange".
+
+Plotnine har opfattet teksten som en variabel med ét niveau og givet den den første farve i paletten. Ser I en meningsløs forklaringsboks, er det næsten altid det, der er sket.
+
 ## Plotnine forventer "tidy" data
 
 - Hver **variabel** er en kolonne.
@@ -792,16 +974,12 @@ Det er præcis det **lange format** fra lektion 3. Derfor er `melt()` nogle gang
 
 ## Ofte brugte `geom`s
 
-::: {.incremental}
-
 - `geom_col` og `geom_bar` — **søjler**
 - `geom_point` og `geom_jitter` — **punkter**
 - `geom_line`, `geom_step`, `geom_smooth` — **linjer**
 - `geom_histogram`, `geom_density`, `geom_boxplot` — **fordelinger**
 - `geom_tile` — **heatmaps**
 - `geom_text` og `geom_label` — **tekst**
-
-:::
 
 <br>
 
@@ -845,6 +1023,71 @@ ggplot(tweets, aes(x = factor(maaned))) +
 :::
 
 `geom_bar` tæller selv. `geom_col` bruger den y-værdi, I giver den, og kræver derfor, at I har aggregeret først. Skal I vise et **gennemsnit**, skal det altid være `geom_col`.
+
+## Statistiske transformationer
+
+Det, der forvirrer bag `geom_bar`: nogle geoms tegner data direkte, andre **regner først**.
+
+- `geom_point` tegner én prik per række. Ingen beregning.
+- `geom_bar` **tæller** rækker per kategori.
+- `geom_histogram` **inddeler** i intervaller og tæller.
+- `geom_boxplot` beregner **kvartiler**.
+- `geom_smooth` **tilpasser en model**.
+
+<br>
+
+`bins=30` er et argument til beregningen, og det ændrer, hvad figuren viser. Prøv `bins=5` og `bins=200` på retweet-fordelingen.
+
+## Skalaer: at overtage valget
+
+- `scale_x_log10()`, `scale_y_log10()` logaritmisk akse
+- `scale_y_continuous(limits=...)` **fjerner** data uden for grænserne
+- `coord_cartesian(ylim=...)` **zoomer** uden at fjerne noget
+- `scale_fill_brewer(type="qual", palette="Set2")` vælg farvepalet
+- `scale_x_continuous(breaks=[...])` bestem hvor tallene står
+
+<br>
+
+Forskellen på de to i midten er ikke kosmetisk. Den ene smider observationer væk.
+
+## Zoom eller slet?
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# Læs advarslen i outputtet!
+(ggplot(gns, aes(x="factor(maaned)", y="antal_ord"))
+ + geom_col()
+ + scale_y_continuous(limits=(16, 22))
+ + labs(title="scale_y_continuous(limits=...)")).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(gns, aes(x = factor(maaned), y = antal_ord)) +
+  geom_col() +
+  scale_y_continuous(limits = c(16, 22)) +
+  labs(title = "scale_y_continuous(limits = ...)")
+```
+
+:::
+
+:::
+
+Figuren er **tom**, og der står *"Removed 12 rows containing missing values"*.
+
+Søjlerne starter i nul, og nul ligger uden for grænserne, så alle tolv søjler blev slettet. `coord_cartesian()` ville have zoomet i stedet.
 
 ## Facetter: små multipler
 
@@ -978,6 +1221,179 @@ ggplot(top, aes(x = reorder(hashtags, n), y = n)) +
 
 Måneder har en naturlig rækkefølge. Hashtags har ikke, så sortér efter værdien, og vend figuren, så etiketterne kan læses.
 
+## Byg figuren op i lag
+
+Wilke anbefaler at bygge komplekse figurer op **trin for trin**, både når man laver dem, og når man præsenterer dem.
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# Trin 1: data + mapping + geom
+p = (ggplot(tweets, aes(x="factor(maaned)", y="retweets"))
+     + geom_boxplot())
+p.show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+p <- ggplot(tweets, aes(x = factor(maaned), y = retweets)) +
+  geom_boxplot()
+p
+```
+
+:::
+
+:::
+
+## Byg figuren op i lag
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# Trin 2: ret skalaen, så fordelingen bliver læsbar
+p = p + scale_y_log10()
+p.show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+p <- p + scale_y_log10()
+p
+```
+
+:::
+
+:::
+
+Bemærk, at figuren kan gemmes i en variabel og bygges videre på senere. Det er én af grammatikkens store fordele.
+
+## Byg figuren op i lag
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# Trin 3: gør den færdig
+p = (p
+     + theme_minimal()
+     + labs(title="Retweets stiger gennem valgåret",
+            subtitle="Fordeling per måned, 2016",
+            x="Måned", y="Retweets (log-skala)",
+            caption="Data: egen indsamling"))
+p.show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+p <- p +
+  theme_minimal() +
+  labs(title = "Retweets stiger gennem valgåret",
+       subtitle = "Fordeling per måned, 2016",
+       x = "Måned", y = "Retweets (log-skala)",
+       caption = "Data: egen indsamling")
+p
+```
+
+:::
+
+:::
+
+Titlen er nu et **udsagn**, ikke en beskrivelse. Det er skridtet fra en figur, der skal forklares, til en figur, der forklarer.
+
+## Gem figuren
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# p.save("retweets.png", width=8, height=5, dpi=300)
+print("Kør linjen lokalt. I browseren er der ingen mappe at gemme i")
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+# ggsave("retweets.png", p, width = 8, height = 5, dpi = 300)
+print("Kør linjen lokalt")
+```
+
+:::
+
+:::
+
+- `width` og `height` i tommer bestemmer, hvor stor teksten bliver **i forhold til** figuren. Skal skriften være større, så gør figuren mindre.
+- `dpi=300` til tryk, `dpi=150` til skærm.
+- `.png` er et pixelbillede. `.pdf` og `.svg` er vektorgrafik og bliver ikke uskarpe, når man zoomer. Brug dem til artikler.
+
+## Når koden fejler
+
+| Fejlbesked | Hvad der er galt |
+|---|---|
+| `NameError: name 'retweets' is not defined` | Glemte anførselstegn om kolonnenavnet |
+| `PlotnineError: Could not evaluate the 'x' mapping` | Kolonnen findes ikke. Tjek stavningen med `tweets.columns` |
+| `KeyError: 'y'` | `geom_col` uden `y`, eller `geom_bar` **med** `y` |
+| `Removed N rows containing missing values` | Ikke en fejl, men en advarsel: N observationer er ikke tegnet |
+| Meningsløs forklaringsboks | En fast værdi er havnet inde i `aes()` |
+| Kun første linje kører | Glemte de ydre parenteser |
+
+<br>
+
+Læs fejlen nedefra og op. Den sidste linje siger som regel præcis, hvad der er galt.
+
+
+## Hvad plotnine ikke kan
+
+- **Lagkagediagrammer.** `coord_polar()` findes ikke. I ggplot2 gør den.
+- **Kort.** `geom_map` og `geom_sf` findes i ggplot2. Plotnine har ikke en færdig løsning — kort laves typisk med `geopandas` ved siden af.
+- **Udvidelsespakker.** R har et stort økosystem omkring ggplot2 (`ggrepel`, `patchwork`, `gganimate`, `ggridges`), som ikke har direkte modstykker i Python.
+
+
+<br>
+
+Grundstammen er den samme. Går I efter noget specialiseret, er R stadig længere fremme — og I kan skifte, fordi grammatikken er den samme.
+
+
 ## Opsamling
 
 - En figur er **ikke** et neutralt vindue. Akser, nævnere og udeladelser er valg.
@@ -990,4 +1406,288 @@ Måneder har en naturlig rækkefølge. Hashtags har ikke, så sortér efter vær
 
 - De figurer, I laver til jer selv, er sjældent dem, I skal vise andre.
 
+- **Grim, dårlig, forkert**: tre ord til tre forskellige slags problemer.
+
+- **Proportionelt blæk**: søjler koder værdien to gange og skal starte i nul. Punkter koder den én gang og tåler et zoom.
+
+# Galleri: alle plottyper
+
+## Vælg efter budskabet, ikke efter datatypen
+
+| Budskab | Spørgsmålet | Geoms |
+|---|---|---|
+| **Mængder** | Hvor meget af hver? | `geom_col` · `geom_bar` · `geom_point` · `geom_tile` |
+| **Fordelinger** | Hvordan spreder værdierne sig? | `geom_histogram` · `geom_density` · `geom_freqpoly` · `geom_boxplot` · `geom_violin` · `stat_ecdf` |
+| **Andele** | Hvor stor en del af helheden? | `geom_bar(position="fill")` · stablede søjler |
+| **Sammenhænge** | Hænger to variable sammen? | `geom_point` · `geom_jitter` · `geom_bin_2d` · `geom_smooth` · `geom_count` |
+| **Tidsserier** | Hvordan udvikler det sig? | `geom_line` · `geom_step` · `geom_area` |
+| **Usikkerhed** | Hvor sikre er tallene? | `geom_pointrange` · `geom_errorbar` · `geom_ribbon` |
+| **Annotation** | Hvad skal man lægge mærke til? | `geom_text` · `geom_label` · `geom_hline` · `annotate` |
+
+## Kør denne først
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: true
+# Aggregerede tabeller, som galleriet bruger
+pr  = tweets.groupby("maaned").size().reset_index(name="antal")
+uge = tweets.set_index("dato").resample("W").size().reset_index(name="antal")
+krydstabel = tweets.groupby(["maaned", "har_hashtag"]).size().reset_index(name="n")
+
+print(pr.head(3))
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: true
+pr  <- tweets |> count(maaned, name = "antal")
+uge <- tweets |> mutate(uge = as.Date(cut(dato, "week"))) |> count(uge, name = "antal")
+krydstabel <- tweets |> count(maaned, har_hashtag, name = "n")
+
+head(pr, 3)
+```
+
+:::
+
+:::
+
+## Mængder: `geom_col`
+
+**`geom_col`**: søjler fra en aggregeret tabel. Standardvalget. Skal starte i nul.
+
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+
+(ggplot(pr, aes(x="factor(maaned)", y="antal")) + geom_col()).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(pr, aes(x = factor(maaned), y = antal)) + geom_col()
+
+```
+
+:::
+
+:::
+
+## Mængder: `geom_bar`
+
+**`geom_bar`**: samme, men tæller selv rækkerne.
+
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+
+(ggplot(tweets, aes(x="factor(maaned)")) + geom_bar()).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+
+ggplot(tweets, aes(x = factor(maaned))) + geom_bar()
+```
+
+:::
+
+:::
+
+## Mængder: `geom_point`
+
+**`geom_point`** som et dot plot: når skalaen er logaritmisk, eller når kategorinavnene er lange. Giver mening med et zoom, fordi der ingen længde er.
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+
+(ggplot(pr, aes(x="antal", y="factor(maaned)")) + geom_point(size=3)).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+
+ggplot(pr, aes(x = antal, y = factor(maaned))) + geom_point(size = 3)
+```
+
+:::
+
+:::
+
+## Mængder: `geom_tile`
+
+**`geom_tile`**: heatmap. Når to kategoriske variable krydses, og mængden er farven.
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+
+krydstabel["gruppe"] = pd.cut(krydstabel["n"], bins=[0, 100, 200, 300, 400], labels=["<100", "100-199", "200-299", "300+"])
+
+(ggplot(krydstabel, aes(x="factor(maaned)", y="har_hashtag", fill="gruppe"))
+ + geom_tile()).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+
+ggplot(krydstabel, aes(x = factor(maaned), y = har_hashtag, fill = n)) + geom_tile()
+```
+
+:::
+
+:::
+
+::: {.aside}
+**Bemærk:** en *kontinuerlig* farveskala giver en farvebjælke, og den kan ikke tegnes i browseren her. Derfor er antallet delt i grupper med `pd.cut()`, så farven bliver diskret. Kører I lokalt, kan I bruge `fill="n"` direkte.
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 # Del 4: Øvelser
+
+## Øvelser
+
+<span class="timer" data-time="1500"></span>
+
+1. **Den mindste figur.** Antal tweets per måned med `geom_bar`. Tilføj derefter titel og akseetiketter, så figuren kan stå alene.
+
+2. **Inde i eller uden for `aes()`.** Lav et scatterplot af `antal_ord` mod `retweets`. Giv først alle punkter samme farve. Farv dem derefter efter `har_hashtag`. Hvad ændrede sig ud over farven?
+
+3. **Manipulér med vilje.** Lav en figur af gennemsnitligt antal retweets per måned, der får forskellen til at se så **lille** ud som muligt, og derefter en, der får den til at se så **stor** ud som muligt. Skriv én sætning om, hvad hver figur "siger", og vurdér med Wilkes ord, om den er grim, dårlig eller forkert.
+
+4. **Zoom lovligt.** Lav en zoomet version af opgave 3, som **ikke** bryder princippet om proportionelt blæk.
+
+5. **Absolut eller relativ.** Vis antallet af tweets med over 10.000 retweets per måned. Først i absolutte tal, så som andel af månedens tweets. Hvilken ville I bruge, og hvorfor?
+
+6. **Statistiske transformationer.** Lav et histogram over `retweets` med `bins=5`, `bins=30` og `bins=200`. Hvilken af de tre viser fordelingen mest ærligt?
+
+7. **Vælg geom efter budskabet.** Formulér ét udsagn om data, I gerne vil vise. Afgør om det er en mængde, en fordeling, en andel eller en sammenhæng. Vælg geom derefter, og byg figuren op i tre trin.
+
+---
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: false
+# Skriv din kode her
+
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+# Skriv din kode her
+
+```
+
+:::
+
+:::
+
+## Litteratur
+
+**Kirk, A.** (2019). *Data Visualisation: A Handbook for Data Driven Design.* 2. udg. London: SAGE.
+
+**Rettberg, J. W.** (2020). Ways of knowing with data visualizations. I: M. Engebretsen & H. Kennedy (red.), *Data Visualization in Society*. Amsterdam: Amsterdam University Press.
+
+**Lemercier, C. & Zalc, C.** (2019). *Quantitative Methods in the Humanities: An Introduction.* Oversat af Arthur Goldhammer. Charlottesville: University of Virginia Press.
+
+**Wilke, C. O.** (2019). *Fundamentals of Data Visualization: A Primer on Making Informative and Compelling Figures.* Sebastopol, CA: O'Reilly. Frit tilgængelig på [clauswilke.com/dataviz](https://clauswilke.com/dataviz/).
+
+**Bergstrom, C. T. & West, J.** (2016). The Principle of Proportional Ink. *Calling Bullshit.* [callingbullshit.org](https://callingbullshit.org/tools/tools_proportional_ink.html).
+
+**Tufte, E. R.** (1983). *The Visual Display of Quantitative Information.* Cheshire, CT: Graphics Press.
+
+**Tukey, J. W.** (1977). *Exploratory Data Analysis.* Reading, MA: Addison-Wesley.
+
+**Wickham, H.** (2014). Tidy Data. *Journal of Statistical Software*, 59(10), 1-23.
