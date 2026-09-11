@@ -1473,7 +1473,7 @@ head(pr, 3)
 ::: {.kode-split}
 
 ```{pyodide}
-#| autorun: false
+#| autorun: true
 
 (ggplot(pr, aes(x="factor(maaned)", y="antal")) + geom_col()).show()
 ```
@@ -1506,7 +1506,7 @@ ggplot(pr, aes(x = factor(maaned), y = antal)) + geom_col()
 ::: {.kode-split}
 
 ```{pyodide}
-#| autorun: false
+#| autorun: true
 
 (ggplot(tweets, aes(x="factor(maaned)")) + geom_bar()).show()
 ```
@@ -1538,7 +1538,7 @@ ggplot(tweets, aes(x = factor(maaned))) + geom_bar()
 ::: {.kode-split}
 
 ```{pyodide}
-#| autorun: false
+#| autorun: true
 
 (ggplot(pr, aes(x="antal", y="factor(maaned)")) + geom_point(size=3)).show()
 ```
@@ -1570,7 +1570,7 @@ ggplot(pr, aes(x = antal, y = factor(maaned))) + geom_point(size = 3)
 ::: {.kode-split}
 
 ```{pyodide}
-#| autorun: false
+#| autorun: true
 
 krydstabel["gruppe"] = pd.cut(krydstabel["n"], bins=[0, 100, 200, 300, 400], labels=["<100", "100-199", "200-299", "300+"])
 
@@ -1597,6 +1597,239 @@ ggplot(krydstabel, aes(x = factor(maaned), y = har_hashtag, fill = n)) + geom_ti
 ::: {.aside}
 **Bemærk:** en *kontinuerlig* farveskala giver en farvebjælke, og den kan ikke tegnes i browseren her. Derfor er antallet delt i grupper med `pd.cut()`, så farven bliver diskret. Kører I lokalt, kan I bruge `fill="n"` direkte.
 :::
+
+## Fordelinger: `geom_histogram`
+
+**`geom_histogram`**: inddeler i intervaller og tæller. `bins` ændrer, hvad I ser.
+
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: true
+(ggplot(tweets, aes(x="retweets")) + geom_histogram(bins=40) + scale_x_log10()).show()
+
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+ggplot(tweets, aes(x = retweets)) + geom_histogram(bins = 40) + scale_x_log10()
+
+```
+
+:::
+
+:::
+
+## Fordelinger: `geom_density`
+
+- **`geom_density`**: glattet kurve. Pænere, men skjuler hvor få observationer der er i halerne.
+
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: true
+
+(ggplot(tweets, aes(x="retweets")) + geom_density() + scale_x_log10()).show()
+
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+
+ggplot(tweets, aes(x = retweets)) + geom_density() + scale_x_log10()
+
+```
+
+:::
+
+:::
+
+
+## Fordelinger: `geom_freqpoly`
+
+**`geom_freqpoly`**: histogram som linje. God, når flere grupper skal sammenlignes.
+
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: true
+
+(ggplot(tweets, aes(x="retweets")) + geom_freqpoly(bins=40) + scale_x_log10()).show()
+
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+
+ggplot(tweets, aes(x = retweets)) + geom_freqpoly(bins = 40) + scale_x_log10()
+
+```
+
+:::
+
+:::
+
+
+## Fordelinger: `geom_boxplot`
+
+**`geom_boxplot`**: median, kvartiler, yderpunkter. Mange fordelinger på lidt plads.
+
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: true
+
+(ggplot(tweets, aes(x="factor(maaned)", y="retweets")) + geom_boxplot() + scale_y_log10()).show()
+
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+
+ggplot(tweets, aes(x = factor(maaned), y = retweets)) + geom_boxplot() + scale_y_log10()
+
+```
+
+:::
+
+:::
+
+## Fordelinger: `geom_violin`
+
+**`geom_violin`**: som boxplot, men viser formen. Afslører toppuklede fordelinger, som boxplottet skjuler.
+
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: true
+
+(ggplot(tweets, aes(x="factor(maaned)", y="retweets")) + geom_violin() + scale_y_log10()).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+
+ggplot(tweets, aes(x = factor(maaned), y = retweets)) + geom_violin() + scale_y_log10()
+```
+
+:::
+
+:::
+
+## Fordelinger: `stat_ecdf`
+
+**`stat_ecdf`**: kumuleret fordeling. Ingen valg af `bins`, og aflæsningen er præcis.
+
+
+::: {.panel-tabset}
+
+### Python
+
+::: {.kode-split}
+
+```{pyodide}
+#| autorun: true
+
+(ggplot(tweets, aes(x="retweets")) + stat_ecdf() + scale_x_log10()).show()
+```
+
+:::
+
+### R
+
+::: {.kode-split}
+
+```{webr}
+#| autorun: false
+
+ggplot(tweets, aes(x = retweets)) + stat_ecdf() + scale_x_log10()
+```
+
+:::
+
+:::
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
