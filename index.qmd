@@ -218,11 +218,7 @@ ggplot(gns, aes(x = factor(maaned), y = antal_ord)) +
 
 <br>
 
-::: {.incremental}
-
 > Hvornår **er** det legitimt at skære y-aksen? Findes der data, hvor det at starte ved nul er det misvisende valg?
-
-:::
 
 ## Absolutte og relative tal
 
@@ -312,15 +308,11 @@ ggplot(h, aes(x = factor(maaned), y = andel)) +
 
 ## Illusioner
 
-::: {.incremental}
-
 - *"In fact, visualization is always abstraction. It often conveys a sense of direct access to data; yet each image is the product of choices about what not to represent"* (Zalc & Lemercier 2019, 126-127).
 
 - Det, der **ikke** er med, er lige så meget et valg som det, der er.
 
 - I vores figurer indtil nu: hvad er valgt fra? Retweets. Tidspunkt på dagen. Hvem der svarede. Alle tweets fra andre år. Alle tweets, der blev slettet, før data blev hentet.
-
-:::
 
 ## Tekst eller figur?
 
@@ -332,13 +324,9 @@ ggplot(h, aes(x = factor(maaned), y = andel)) +
 
 <br>
 
-::: {.incremental}
-
 **Case 1:** 28,5 % af tweetsene i januar havde et hashtag, mod 48,4 % i oktober. *Tekst eller figur?*
 
 **Case 2:** Fordelingen af retweets på tværs af alle 3.945 tweets. *Tekst eller figur?*
-
-:::
 
 <span class="timer" data-time="180"></span>
 
@@ -366,17 +354,12 @@ Spørgsmålet kommer **før** figuren. Ikke omvendt.
 
 ## Publikum
 
-::: {.incremental}
-
 - **Hvem** er modtagerne?
 - Hvilken **viden** har de i forvejen?
 - Hvad er deres **motivation** for at forstå det her?
 - Hvordan er deres **visualiseringslitteracitet**?
 
-:::
-
 <br>
-
 
 Et groft udgangspunkt:
 
@@ -386,15 +369,11 @@ Et groft udgangspunkt:
 
 ## For os selv eller for andre?
 
-::: {.incremental}
-
 - Vi visualiserer hele tiden **til os selv**, mens vi udforsker data. Det er en del af eksplorativ dataanalyse.
 
 - Den slags figurer må gerne være **hurtige og grimme**. Modtageren (os selv) har uendelig tålmodighed og kender data.
 
 - Kirk (2019, 196): de figurer, der afslørede noget for jer selv, er ofte **prototyper** på det, I skal vise andre... Men ikke altid.
-
-:::
 
 ## Når EDA-figuren ikke kan bruges
 
@@ -478,13 +457,9 @@ Log-skalaen er ikke pynt. Den afspejler, at data faktisk er fordelt sådan. Det 
 
 ## Explanatory og exploratory
 
-::: {.incremental}
-
 **Explanatory** (Kirk 2019, 82): den, der laver figuren, tager ansvar for at **fremhæve observationerne**. Annotationer peger på det vigtige. Figuren skal kunne stå alene.
 
 **Exploratory** (Kirk 2019, 84): modtageren skal selv **danne fortolkningen**. Næsten altid digitalt og interaktivt. *"The responsibility for then translating 'what it means' (…) is passed on to them."*
-
-:::
 
 <br>
 
@@ -599,12 +574,8 @@ ggplot(tweets, aes(x = retweets)) +
 
 :::
 
-::: {.incremental}
-
 - Det mest delte tweet står alene for **1,1%** af alle retweets i hele året.
 - De øverste 1 % står for knap **9%**.
-
-:::
 
 ## Samme data, log-skala
 
