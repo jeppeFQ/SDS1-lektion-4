@@ -923,11 +923,7 @@ print("Kør linjen lokalt")
 
 - Grammatikken er den samme hver gang: **data + mapping + geom**. Resten er finpudsning.
 
-- De figurer, I laver til jer selv, er sjældent dem, I skal vise andre.
-
 - **Grim, dårlig, forkert**: tre ord til tre forskellige slags problemer.
-
-- **Proportionelt blæk**: søjler koder værdien to gange og skal starte i nul. Punkter koder den én gang og tåler et zoom.
 
 # Galleri: alle plottyper
 
